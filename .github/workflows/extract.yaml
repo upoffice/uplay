@@ -23,7 +23,7 @@ jobs:
           curl -fsSL -A "Mozilla/5.0" \
             https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe \
             -o /tmp/upc.exe
-          VERSION=$(python3 .github/version.py /tmp/upc.exe)
+          VERSION=$(python3 .github/get_version.py /tmp/upc.exe)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PREVIOUS=$(cat versions/latest.txt 2>/dev/null || true)
           [[ "$PREVIOUS" == "$VERSION" ]] && echo "skip=true" >> "$GITHUB_OUTPUT" || true
@@ -32,9 +32,10 @@ jobs:
         run: |
           go install github.com/dennwc/protod/cmd/protod@latest
           7z x /tmp/upc.exe -o/tmp/upc -y > /dev/null
-          mkdir -p protos
-          mapfile -t BINS < <(find /tmp/upc -type f \( -iname "*.dll" -o -iname "*.exe" \))
-          ~/go/bin/protod -out /tmp/proto_out "${BINS[@]}"
+          mkdir -p protos /tmp/proto_out
+          while IFS= read -r bin; do
+            ~/go/bin/protod -out /tmp/proto_out "$bin" 2>/dev/null || true
+          done < <(find /tmp/upc -type f \( -iname "*.dll" -o -iname "*.exe" \))
           find /tmp/proto_out -name "*.proto" ! -path "*/google/*" -exec cp {} protos/ \;
           mkdir -p versions && echo "${{ steps.check.outputs.version }}" > versions/latest.txt
           git config user.name "github-actions[bot]"
