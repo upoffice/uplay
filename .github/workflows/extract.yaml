@@ -1,13 +1,13 @@
-name: Extract UPC Protobufs
+name: Extract Protobufs
 
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 concurrency:
   group: extract-upc-protos
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   extract:
@@ -17,27 +17,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
+      - id: check
+        run: |
           sudo apt-get install -y --no-install-recommends innoextract
-          go install github.com/dennwc/protod/cmd/protod@latest
-
-      - run: |
-          curl -fsSL https://ubistatic3-a.akamaihd.net/orbit/launcher_installer/UbisoftConnectInstaller.exe -o /tmp/upc.exe
+          curl -fsSL https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe -o /tmp/upc.exe
           VERSION=$(innoextract --info /tmp/upc.exe 2>&1 | grep -oP '(?<=App version: )\S+')
-          echo "upc_version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PREVIOUS=$(cat versions/latest.txt 2>/dev/null || true)
           [[ "$PREVIOUS" == "$VERSION" ]] && echo "skip=true" >> "$GITHUB_OUTPUT" || true
-        id: check
 
       - if: steps.check.outputs.skip != 'true'
         run: |
+          go install github.com/dennwc/protod/cmd/protod@latest
           innoextract --collisions=overwrite -d /tmp/upc /tmp/upc.exe
           mkdir -p protos
           mapfile -t BINS < <(find /tmp/upc -type f \( -iname "*.dll" -o -iname "*.exe" \))
           ~/go/bin/protod -out /tmp/proto_out "${BINS[@]}"
           find /tmp/proto_out -name "*.proto" ! -path "*/google/*" -exec cp {} protos/ \;
-          mkdir -p versions && echo "${{ steps.check.outputs.upc_version }}" > versions/latest.txt
-          git config user.name  "github-actions[bot]"
+          mkdir -p versions && echo "${{ steps.check.outputs.version }}" > versions/latest.txt
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add protos/ versions/
-          git diff --cached --quiet || git commit -m "protos: ${{ steps.check.outputs.upc_version }}" && git push
+          git diff --cached --quiet || git commit -m "protos: ${{ steps.check.outputs.version }}" && git push
