@@ -19,9 +19,22 @@ jobs:
 
       - id: check
         run: |
-          sudo apt-get install -y --no-install-recommends innoextract
-          curl -fsSL https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe -o /tmp/upc.exe
-          VERSION=$(innoextract --info /tmp/upc.exe 2>&1 | grep -oP '(?<=App version: )\S+')
+          pip install pefile -q
+          curl -fsSL -A "Mozilla/5.0" \
+            https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe \
+            -o /tmp/upc.exe
+          VERSION=$(python3 - /tmp/upc.exe << 'EOF'
+import pefile, sys
+pe = pefile.PE(sys.argv[1], fast_load=True)
+pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE']])
+for fi in pe.FileInfo[0]:
+    if fi.Key == b'StringFileInfo':
+        for st in fi.StringTable:
+            v = st.entries.get(b'FileVersion', b'').decode().strip()
+            if v: print(v); raise SystemExit(0)
+raise SystemExit(1)
+EOF
+)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PREVIOUS=$(cat versions/latest.txt 2>/dev/null || true)
           [[ "$PREVIOUS" == "$VERSION" ]] && echo "skip=true" >> "$GITHUB_OUTPUT" || true
@@ -29,7 +42,7 @@ jobs:
       - if: steps.check.outputs.skip != 'true'
         run: |
           go install github.com/dennwc/protod/cmd/protod@latest
-          innoextract --collisions=overwrite -d /tmp/upc /tmp/upc.exe
+          7z x /tmp/upc.exe -o/tmp/upc -y > /dev/null
           mkdir -p protos
           mapfile -t BINS < <(find /tmp/upc -type f \( -iname "*.dll" -o -iname "*.exe" \))
           ~/go/bin/protod -out /tmp/proto_out "${BINS[@]}"
