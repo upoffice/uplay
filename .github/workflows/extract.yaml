@@ -1,4 +1,4 @@
-name: Extract UPC Protobufs
+name: Extract Protobufs
 
 on:
   schedule:
@@ -23,9 +23,9 @@ jobs:
           curl -fsSL -A "Mozilla/5.0" \
             https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe \
             -o /tmp/upc.exe
-          VERSION=$(python3 - /tmp/upc.exe << 'EOF'
+          VERSION=$(python3 -c "
 import pefile, sys
-pe = pefile.PE(sys.argv[1], fast_load=True)
+pe = pefile.PE('/tmp/upc.exe', fast_load=True)
 pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_RESOURCE']])
 for fi in pe.FileInfo[0]:
     if fi.Key == b'StringFileInfo':
@@ -33,8 +33,7 @@ for fi in pe.FileInfo[0]:
             v = st.entries.get(b'FileVersion', b'').decode().strip()
             if v: print(v); raise SystemExit(0)
 raise SystemExit(1)
-EOF
-)
+")
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PREVIOUS=$(cat versions/latest.txt 2>/dev/null || true)
           [[ "$PREVIOUS" == "$VERSION" ]] && echo "skip=true" >> "$GITHUB_OUTPUT" || true
