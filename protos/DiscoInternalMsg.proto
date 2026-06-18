@@ -1,0 +1,104 @@
+syntax = "proto3";
+
+package DiscoInternalMsg;
+
+enum InputStopOutcome {
+	UNKONWN	= 0;
+	SESSION_TERMINATED	= 1;
+	PERMISSION_CHANGED	= 2;
+	DEVICE_DISCONNECTED	= 3;
+}
+
+message MouseModeChanged {
+	bool	relative	= 1;
+	uint32	pos_x	= 2;
+	uint32	pos_y	= 3;
+}
+
+message MouseCursorChanged {
+	bool	has_data	= 1;
+}
+
+message StreamingPermissionsChanged {
+	bool	gamepad	= 1;
+	bool	keyboard	= 2;
+	bool	mouse	= 3;
+	bool	immersive	= 4;
+}
+
+message ClosingOptionsChanged {
+	bool	askUi	= 1;
+	bool	notifyOnly	= 2;
+}
+
+message CloseDetected {
+}
+
+message GamepadRumble {
+	uint32	gamepadID	= 1;
+	uint32	motorBig	= 2;
+	uint32	motorSmall	= 3;
+	uint32	pad_first	= 4;
+	uint32	pad_second	= 5;
+}
+
+message StreamingGamepadStopSignal {
+	uint32	gamepadId	= 1;
+	InputStopOutcome	reason	= 2;
+}
+
+message StreamingKeyboardStartSignal {
+}
+
+message StreamingKeyboardStopSignal {
+	InputStopOutcome	reason	= 1;
+}
+
+message WebViewLoadStateChanged {
+	uint32	loadState	= 1;
+}
+
+message WindowsRenderModeChanged {
+	uint32	renderMode	= 1;
+}
+
+message GamepadConnectionEvent {
+	uint32	gamepadId	= 1;
+	string	gamepadName	= 2;
+	bool	isConnected	= 3;
+}
+
+message StreamingRuntimeStatusEvent {
+	uint32	event	= 1;
+}
+
+message StreamingMetricsEvent {
+}
+
+message KeyboardEvent {
+	uint32	type	= 1;
+	uint32	keycode	= 2;
+	uint32	scancode	= 3;
+	uint32	action	= 4;
+	uint32	mods	= 5;
+	uint64	wparam	= 6;
+	int64	lparam	= 7;
+}
+
+message GamepadPolicyChanged {
+	uint32	policy	= 1;
+}
+
+message KeyboardPolicyChanged {
+	uint32	policy	= 1;
+}
+
+message StreamingVideoFrameReceived {
+}
+
+message StreamingAudioReceived {
+}
+
+message WindowRenderingReady {
+}
+
