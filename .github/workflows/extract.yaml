@@ -23,7 +23,7 @@ jobs:
           curl -fsSL -A "Mozilla/5.0" \
             https://static3.cdn.ubi.com/orbit/launcher_installer/UbisoftConnectInstaller.exe \
             -o /tmp/upc.exe
-          VERSION=$(python3 .github/get_version.py /tmp/upc.exe)
+          VERSION=$(python3 .github/version.py /tmp/upc.exe)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           PREVIOUS=$(cat versions/latest.txt 2>/dev/null || true)
           [[ "$PREVIOUS" == "$VERSION" ]] && echo "skip=true" >> "$GITHUB_OUTPUT" || true
