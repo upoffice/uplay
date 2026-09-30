@@ -51,6 +51,7 @@ message SteamInfo {
 	optional string	steamWebTicket	= 9;
 	repeated SteamCdKey	steamCdKey	= 10;
 	optional bool	isSteamUserLoggedOn	= 11;
+	optional string	steamAppInstallDir	= 12;
 }
 
 message StartReqDiagnostics {
