@@ -40,6 +40,13 @@ message WeGameInfo {
 }
 
 message SteamInfo {
+	enum SteamHardwareType {
+		SteamHardwareType_None	= 0;
+		SteamHardwareType_Deck	= 1;
+		SteamHardwareType_Machine	= 2;
+		SteamHardwareType_Frame	= 3;
+	}
+
 	optional string	steamProfileId	= 1;
 	optional string	steamTicket	= 2;
 	optional string	steamGameOwnerProfileId	= 3;
@@ -47,11 +54,12 @@ message SteamInfo {
 	optional uint32	steamFreePackageId	= 5;
 	optional uint32	steamRequiredProductId	= 6;
 	repeated SteamProofOfPurchase	steamProofOfPurchase	= 7;
-	optional bool	steamIsRunningOnSteamDeck	= 8;
 	optional string	steamWebTicket	= 9;
 	repeated SteamCdKey	steamCdKey	= 10;
 	optional bool	isSteamUserLoggedOn	= 11;
 	optional string	steamAppInstallDir	= 12;
+	optional SteamHardwareType	steamHardwareType	= 13;
+	reserved 8;
 }
 
 message StartReqDiagnostics {
